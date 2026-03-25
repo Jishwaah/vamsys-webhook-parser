@@ -5,6 +5,12 @@ const express = require("express");
 const { loadEmbedConfig, loadRoutingConfig, resolveDiscordTarget } = require("./config");
 const { sendToDiscord } = require("./discord");
 const { buildDiscordMessage } = require("./formatter");
+const {
+  captureException,
+  flushMonitoring,
+  initMonitoring,
+  isMonitoringEnabled,
+} = require("./monitoring");
 const { validateIncomingWebhook } = require("./validate");
 
 const app = express();
@@ -15,8 +21,12 @@ const embedConfigFile = process.env.EMBED_CONFIG_FILE || "./config/embed-config.
 const webhookSecret = process.env.WEBHOOK_SECRET || "";
 const logLevel = (process.env.LOG_LEVEL || "development").toLowerCase();
 
-let routingConfig = loadRoutingConfig(routesFile);
-let embedConfig = loadEmbedConfig(embedConfigFile);
+initMonitoring({
+  dsn: process.env.SENTRY_DSN || "",
+});
+
+let routingConfig;
+let embedConfig;
 
 if (process.env.PORT && !Number.isFinite(parsedPort)) {
   console.warn(`Invalid PORT "${process.env.PORT}" provided. Falling back to 3000.`);
@@ -38,6 +48,10 @@ function logWarn(message, metadata = {}) {
   console.warn(message, metadata);
 }
 
+function logError(message, metadata = {}) {
+  console.error(message, metadata);
+}
+
 function secretsMatch(expectedSecret, providedSecret) {
   if (!expectedSecret || !providedSecret) {
     return false;
@@ -52,6 +66,56 @@ function secretsMatch(expectedSecret, providedSecret) {
 
   return crypto.timingSafeEqual(expectedBuffer, providedBuffer);
 }
+
+function loadStartupConfig() {
+  routingConfig = loadRoutingConfig(routesFile);
+  embedConfig = loadEmbedConfig(embedConfigFile);
+}
+
+try {
+  loadStartupConfig();
+} catch (error) {
+  captureException(error, {
+    level: "fatal",
+    tags: {
+      component: "startup-config",
+    },
+  });
+  logError("[startup] Failed to load configuration", {
+    error: error.message,
+  });
+  throw error;
+}
+
+process.on("unhandledRejection", async (reason) => {
+  const error = reason instanceof Error ? reason : new Error(String(reason));
+  captureException(error, {
+    level: "error",
+    tags: {
+      component: "process",
+      type: "unhandledRejection",
+    },
+  });
+  logError("[process] Unhandled promise rejection", {
+    error: error.message,
+  });
+  await flushMonitoring();
+});
+
+process.on("uncaughtException", async (error) => {
+  captureException(error, {
+    level: "fatal",
+    tags: {
+      component: "process",
+      type: "uncaughtException",
+    },
+  });
+  logError("[process] Uncaught exception", {
+    error: error.message,
+  });
+  await flushMonitoring();
+  process.exit(1);
+});
 
 app.use((req, _res, next) => {
   logInfo("[request] Incoming HTTP request", {
@@ -168,7 +232,17 @@ app.post("/webhooks/vamsys", async (req, res) => {
       event: payload.event,
     });
   } catch (error) {
-    console.error("[webhook] Failed to forward to Discord", {
+    captureException(error, {
+      level: "error",
+      tags: {
+        component: "discord-delivery",
+        event: payload.event,
+      },
+      extra: {
+        eventId: payload.event_id,
+      },
+    });
+    logError("[webhook] Failed to forward to Discord", {
       event: payload.event,
       eventId: payload.event_id,
       error: error.message,
@@ -180,6 +254,28 @@ app.post("/webhooks/vamsys", async (req, res) => {
   }
 });
 
+app.use((error, req, res, _next) => {
+  captureException(error, {
+    level: "error",
+    tags: {
+      component: "express",
+      method: req.method,
+      path: req.originalUrl,
+    },
+  });
+  logError("[request] Unhandled application error", {
+    method: req.method,
+    path: req.originalUrl,
+    error: error.message,
+  });
+  return res.status(500).json({
+    ok: false,
+    error: "Internal server error",
+  });
+});
+
 app.listen(port, () => {
-  console.log(`vamsys-webhookparser listening on port ${port} (log level: ${logLevel})`);
+  console.log(
+    `vamsys-webhookparser listening on port ${port} (log level: ${logLevel}, sentry: ${isMonitoringEnabled() ? "enabled" : "disabled"})`,
+  );
 });
