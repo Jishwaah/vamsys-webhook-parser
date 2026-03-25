@@ -35,10 +35,6 @@ function logInfo(message, metadata = {}) {
 }
 
 function logWarn(message, metadata = {}) {
-  if (!shouldLog()) {
-    return;
-  }
-
   console.warn(message, metadata);
 }
 
@@ -94,7 +90,8 @@ app.use((error, req, res, next) => {
 app.get("/health", (_req, res) => {
   res.json({
     ok: true,
-    routesFile: routingConfig.path,
+    routesLoaded: Boolean(routingConfig),
+    embedConfigLoaded: Boolean(embedConfig),
   });
 });
 
@@ -122,7 +119,7 @@ app.post("/webhooks/vamsys", async (req, res) => {
     logWarn("[webhook] Rejected invalid payload", {
       receivedAt: new Date().toISOString(),
       errors,
-      body: req.body,
+      contentType: req.get("content-type") || "",
     });
     return res.status(400).json({
       ok: false,

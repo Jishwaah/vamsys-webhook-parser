@@ -51,16 +51,11 @@ async function sendToDiscord(webhookUrl, message) {
     }
 
     if (response.status === 429 && attempt < MAX_RETRIES) {
-      const retryAfterSeconds = Number.parseFloat(response.headers.get("Retry-After") || "1");
+      const retryAfterSeconds = Number.parseFloat(response.headers.get("Retry-After") || "");
       const retryDelayMs = Number.isFinite(retryAfterSeconds)
         ? Math.ceil(retryAfterSeconds * 1000)
-        : 1000;
+        : getRetryDelay(attempt);
       await sleep(retryDelayMs);
-      continue;
-    }
-
-    if (response.status >= 500 && response.status < 600 && attempt < MAX_RETRIES) {
-      await sleep(getRetryDelay(attempt));
       continue;
     }
 
