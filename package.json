@@ -9,7 +9,7 @@
     "dev": "node --watch src/index.js"
   },
   "engines": {
-    "node": ">=18"
+    "node": ">=18.11.0"
   },
   "dependencies": {
     "dotenv": "^16.4.5",

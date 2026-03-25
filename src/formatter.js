@@ -20,11 +20,16 @@ function colorFromEvent(eventName, embedConfig) {
   }
 
   const eventParts = eventName.split(".");
-  const actionKey = eventParts.slice(1).join(".");
-  const actionColor = embedConfig.actionColors[actionKey];
+  const actionKeys = [eventParts.slice(1).join("."), eventParts[eventParts.length - 1]].filter(
+    Boolean,
+  );
 
-  if (actionColor) {
-    return hexColorToDecimal(actionColor);
+  for (const actionKey of actionKeys) {
+    const actionColor = embedConfig.actionColors[actionKey];
+
+    if (actionColor) {
+      return hexColorToDecimal(actionColor);
+    }
   }
 
   return hexColorToDecimal(embedConfig.defaultColor);
@@ -122,7 +127,7 @@ function buildDiscordMessage(payload, route, embedConfig) {
   };
 
   return {
-    username: route.username || "vAMSYS Alerts",
+    username: route.username || "VAMSYS Alerts",
     embeds: [embed],
   };
 }

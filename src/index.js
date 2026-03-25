@@ -1,5 +1,6 @@
 require("dotenv").config();
 
+const crypto = require("crypto");
 const express = require("express");
 const { loadEmbedConfig, loadRoutingConfig, resolveDiscordTarget } = require("./config");
 const { sendToDiscord } = require("./discord");
@@ -7,7 +8,8 @@ const { buildDiscordMessage } = require("./formatter");
 const { validateIncomingWebhook } = require("./validate");
 
 const app = express();
-const port = Number(process.env.PORT || 3000);
+const parsedPort = Number.parseInt(process.env.PORT || "", 10);
+const port = Number.isFinite(parsedPort) ? parsedPort : 3000;
 const routesFile = process.env.ROUTES_FILE || "./config/discord-routes.json";
 const embedConfigFile = process.env.EMBED_CONFIG_FILE || "./config/embed-config.json";
 const webhookSecret = process.env.WEBHOOK_SECRET || "";
@@ -15,6 +17,10 @@ const logLevel = (process.env.LOG_LEVEL || "development").toLowerCase();
 
 let routingConfig = loadRoutingConfig(routesFile);
 let embedConfig = loadEmbedConfig(embedConfigFile);
+
+if (process.env.PORT && !Number.isFinite(parsedPort)) {
+  console.warn(`Invalid PORT "${process.env.PORT}" provided. Falling back to 3000.`);
+}
 
 function shouldLog() {
   return logLevel === "development";
@@ -34,6 +40,21 @@ function logWarn(message, metadata = {}) {
   }
 
   console.warn(message, metadata);
+}
+
+function secretsMatch(expectedSecret, providedSecret) {
+  if (!expectedSecret || !providedSecret) {
+    return false;
+  }
+
+  const expectedBuffer = Buffer.from(expectedSecret, "utf8");
+  const providedBuffer = Buffer.from(providedSecret, "utf8");
+
+  if (expectedBuffer.length !== providedBuffer.length) {
+    return false;
+  }
+
+  return crypto.timingSafeEqual(expectedBuffer, providedBuffer);
 }
 
 app.use((req, _res, next) => {
@@ -86,7 +107,7 @@ app.post("/webhooks/vamsys", async (req, res) => {
   if (webhookSecret) {
     const providedSecret = req.header("x-webhook-secret");
 
-    if (providedSecret !== webhookSecret) {
+    if (!secretsMatch(webhookSecret, providedSecret)) {
       logWarn("[webhook] Rejected request with invalid secret", {
         receivedAt: new Date().toISOString(),
         ip: req.ip,
@@ -159,21 +180,6 @@ app.post("/webhooks/vamsys", async (req, res) => {
       ok: false,
       error: "Failed to deliver webhook to Discord",
     });
-  }
-});
-
-app.post("/admin/reload-config", (_req, res) => {
-  try {
-    routingConfig = loadRoutingConfig(routesFile);
-    embedConfig = loadEmbedConfig(embedConfigFile);
-    return res.json({
-      ok: true,
-      routesFile: routingConfig.path,
-      embedConfigFile: embedConfig.path,
-    });
-  } catch (error) {
-    console.error("Failed to reload config", error);
-    return res.status(500).json({ ok: false, error: error.message });
   }
 });
 

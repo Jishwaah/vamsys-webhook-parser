@@ -2,6 +2,10 @@ function isObject(value) {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function isNonEmptyString(value) {
+  return typeof value === "string" && value.trim() !== "";
+}
+
 function validateIncomingWebhook(payload) {
   const errors = [];
 
@@ -9,19 +13,19 @@ function validateIncomingWebhook(payload) {
     return ["Request body must be a JSON object."];
   }
 
-  if (typeof payload.event !== "string" || !payload.event) {
+  if (!isNonEmptyString(payload.event)) {
     errors.push('Missing or invalid "event".');
   }
 
-  if (typeof payload.event_id !== "string" || !payload.event_id) {
+  if (!isNonEmptyString(payload.event_id)) {
     errors.push('Missing or invalid "event_id".');
   }
 
-  if (typeof payload.timestamp !== "string" || !payload.timestamp) {
+  if (!isNonEmptyString(payload.timestamp)) {
     errors.push('Missing or invalid "timestamp".');
   }
 
-  if (typeof payload.airline_id !== "number") {
+  if (!Number.isFinite(payload.airline_id)) {
     errors.push('Missing or invalid "airline_id".');
   }
 

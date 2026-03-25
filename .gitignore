@@ -1,4 +1,4 @@
 node_modules/
 .env
-/config/embed-config.json
-/config/discord-routes.json
+/config/*.json
+!/config/*.example.json
