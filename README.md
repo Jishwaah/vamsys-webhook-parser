@@ -52,6 +52,24 @@ If an event is not configured and `defaultWebhookUrl` is empty, the service acce
 
 If `WEBHOOK_SECRET` is set, the incoming request must include `x-webhook-secret`. You may need to configure this as a custom header in your vAMSYS webhook settings.
 
+## Monitoring
+
+Sentry reporting is optional. If `SENTRY_DSN` is set in `.env`, the app will report captured errors to Sentry. If it is empty, Sentry stays disabled.
+
+Example:
+
+```env
+SENTRY_DSN=https://examplePublicKey@o0.ingest.sentry.io/0
+```
+
+When enabled, the app reports:
+
+- startup configuration failures
+- Discord delivery failures
+- unexpected Express errors
+- unhandled promise rejections
+- uncaught exceptions
+
 ## Run
 
 ```bash
