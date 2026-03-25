@@ -1,4 +1,4 @@
-# vamsys-webhookparser
+# vAMSYS Webhook Parser Tool
 
 Small Node.js service that receives incoming webhook events, validates the shared envelope, routes each event to a configured Discord webhook, and sends a formatted Discord embed.
 
