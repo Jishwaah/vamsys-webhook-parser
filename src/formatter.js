@@ -117,12 +117,12 @@ function buildDiscordMessage(payload, route, embedConfig) {
     timestamp: payload.timestamp,
     fields: buildFields(payload),
     footer: {
-      text: "vamsys-webhookparser",
+      text: "vamsys-webhookparser by Jishwaah",
     },
   };
 
   return {
-    username: route.username || "VAMSYS Alerts",
+    username: route.username || "vAMSYS Alerts",
     embeds: [embed],
   };
 }
