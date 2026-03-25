@@ -8,20 +8,26 @@ function titleFromEvent(eventName) {
     .join(" ");
 }
 
-function colorFromEvent(eventName) {
-  if (eventName.endsWith(".registered") || eventName.endsWith(".created")) {
-    return 0x2ecc71;
+function hexColorToDecimal(color) {
+  return Number.parseInt(color.replace(/^#/, ""), 16);
+}
+
+function colorFromEvent(eventName, embedConfig) {
+  const eventColor = embedConfig.eventColors[eventName];
+
+  if (eventColor) {
+    return hexColorToDecimal(eventColor);
   }
 
-  if (eventName.endsWith(".deleted") || eventName.endsWith(".removed")) {
-    return 0xe74c3c;
+  const eventParts = eventName.split(".");
+  const actionKey = eventParts.slice(1).join(".");
+  const actionColor = embedConfig.actionColors[actionKey];
+
+  if (actionColor) {
+    return hexColorToDecimal(actionColor);
   }
 
-  if (eventName.endsWith(".updated")) {
-    return 0x3498db;
-  }
-
-  return 0xf1c40f;
+  return hexColorToDecimal(embedConfig.defaultColor);
 }
 
 function flattenScalars(input, prefix = "", output = []) {
@@ -103,11 +109,11 @@ function buildFields(payload) {
   return [...baseFields, ...scalarFields];
 }
 
-function buildDiscordMessage(payload, route) {
+function buildDiscordMessage(payload, route, embedConfig) {
   const embed = {
     title: titleFromEvent(payload.event),
     description: `Incoming \`${payload.event}\` webhook received and processed.`,
-    color: colorFromEvent(payload.event),
+    color: colorFromEvent(payload.event, embedConfig),
     timestamp: payload.timestamp,
     fields: buildFields(payload),
     footer: {

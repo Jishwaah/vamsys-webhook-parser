@@ -1,0 +1,27 @@
+{
+  "defaultColor": "#f1c40f",
+  "actionColors": {
+    "registered": "#2ecc71",
+    "approved": "#2ecc71",
+    "created": "#2ecc71",
+    "completed": "#2ecc71",
+    "accepted": "#2ecc71",
+    "awarded": "#2ecc71",
+    "updated": "#3498db",
+    "changed": "#3498db",
+    "need_reply": "#3498db",
+    "cancelled": "#e67e22",
+    "rejected": "#e74c3c",
+    "deleted": "#e74c3c",
+    "removed": "#e74c3c",
+    "banned": "#e74c3c",
+    "revoked": "#e74c3c",
+    "failed": "#e74c3c",
+    "invalidated": "#e74c3c",
+    "unbanned": "#95a5a6"
+  },
+  "eventColors": {
+    "notam.created": "#1abc9c",
+    "alert.created": "#f39c12"
+  }
+}

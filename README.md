@@ -18,7 +18,8 @@ Small Node.js service that receives incoming webhook events, validates the share
 
 1. Copy `.env.example` to `.env`
 2. Copy `config/discord-routes.example.json` to `config/discord-routes.json`
-3. Set a Discord webhook URL for each event you want to forward
+3. Copy `config/embed-config.example.json` to `config/embed-config.json` if you want editable embed colors
+4. Set a Discord webhook URL for each event you want to forward
 
 Example routing file:
 
@@ -39,6 +40,35 @@ Example routing file:
 ```
 
 If an event is not configured and `defaultWebhookUrl` is empty, the service accepts the request but does not forward it.
+
+## Embed colors
+
+Embed colors are now configured in `config/embed-config.json`.
+
+Example:
+
+```json
+{
+  "defaultColor": "#f1c40f",
+  "actionColors": {
+    "created": "#2ecc71",
+    "updated": "#3498db",
+    "deleted": "#e74c3c",
+    "accepted": "#2ecc71",
+    "rejected": "#e74c3c"
+  },
+  "eventColors": {
+    "notam.created": "#1abc9c",
+    "alert.created": "#f39c12"
+  }
+}
+```
+
+Color lookup order is:
+
+- exact event match from `eventColors`
+- action match from `actionColors` using the part after the first dot, for example `pilot.registered` -> `registered` and `pirep.need_reply` -> `need_reply`
+- `defaultColor`
 
 ## Endpoints
 
