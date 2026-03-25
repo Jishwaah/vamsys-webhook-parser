@@ -154,8 +154,16 @@ app.use((error, req, res, next) => {
 app.get("/health", (_req, res) => {
   res.json({
     ok: true,
+    service: "vamsys-webhookparser",
+    logLevel,
     routesLoaded: Boolean(routingConfig),
     embedConfigLoaded: Boolean(embedConfig),
+    routeCount: Object.keys(routingConfig.events || {}).length,
+    defaultWebhookConfigured: Boolean(routingConfig.defaultWebhookUrl),
+    embedActionColorCount: Object.keys(embedConfig.actionColors || {}).length,
+    embedEventColorCount: Object.keys(embedConfig.eventColors || {}).length,
+    webhookSecretRequired: Boolean(webhookSecret),
+    sentryEnabled: isMonitoringEnabled(),
   });
 });
 
