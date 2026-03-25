@@ -18,7 +18,8 @@ Small Node.js service that receives incoming webhook events, validates the share
 
 1. Copy `.env.example` to `.env`
 2. Copy `config/discord-routes.example.json` to `config/discord-routes.json`
-3. Set a Discord webhook URL for each event you want to forward
+3. Config `config/embed-config.example.json` to `config/embed-config.json`
+4. Set a Discord webhook URL for each event you want to forward
 
 Example routing file:
 
