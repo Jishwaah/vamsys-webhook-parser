@@ -1,0 +1,13 @@
+{
+  "defaultWebhookUrl": "",
+  "events": {
+    "pilot.registered": {
+      "webhookUrl": "https://discord.com/api/webhooks/your/webhook",
+      "username": "VAMSYS Alerts"
+    },
+    "flight.completed": {
+      "webhookUrl": "https://discord.com/api/webhooks/another/webhook",
+      "username": "Flight Notifications"
+    }
+  }
+}
